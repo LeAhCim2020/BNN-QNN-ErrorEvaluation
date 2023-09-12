@@ -11,6 +11,7 @@ import json
 import sys
 import os
 from datetime import datetime
+sys.path.append("code/python/")
 
 from Utils import set_layer_mode, parse_args, dump_exp_data, create_exp_folder, store_exp_data, get_model
 
@@ -89,9 +90,9 @@ def main():
     test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
 
     if args.model == ("ResNet"):
-       model = nn_model(BasicBlock, [2, 2, 2, 2], cel_train, cel_test, weightBits=binarizepm1, inputBits=binarizepm1, quantize_train=q_train, quantize_eval=q_eval).to(device)
+       model = nn_model(BasicBlock, [2, 2, 2, 2], weightBits=binarizepm1, inputBits=binarizepm1, quantize_train=q_train, quantize_eval=q_eval).to(device)
     else:
-       model = nn_model(cel_train, cel_test, weightBits=binarizepm1, inputBits=binarizepm1, quantize_train=q_train, quantize_eval=q_eval).to(device)
+       model = nn_model(weightBits=binarizepm1, inputBits=binarizepm1, quantize_train=q_train, quantize_eval=q_eval).to(device)
 
     # create experiment folder and file
     to_dump_path = create_exp_folder(model)
@@ -116,12 +117,18 @@ def main():
         # test(model, device, train_loader)
         since = int(round(time.time()*1000))
         #
-        test(model, device, test_loader)
+        result = test(model, device, test_loader)
         #
         time_elapsed += int(round(time.time()*1000)) - since
         print('Test time elapsed: {}ms'.format(int(round(time.time()*1000)) - since))
         # test(model, device, train_loader)
         scheduler.step()
+        if epoch == args.epochs:
+            final_result = result
+
+
+    to_dump_data = dump_exp_data(model, args, final_result)
+    store_exp_data(to_dump_path, to_dump_data) 
 
     if args.test_error:
         all_accuracies = test_error(model, device, test_loader)

@@ -31,39 +31,39 @@ class Quantization2:
 
 binarizepm1 = Quantization1(binarizePM1.binarize)
 
-q_train = True # quantization during training
-q_eval = True # quantization during evaluation
-
 
 class VGG3(nn.Module):
-    def __init__(self, cel_train, cel_test, weightBits=None, inputBits=None, quantize_train=True, quantize_eval=True):
+    def __init__(self, weightBits=None, inputBits=None, quantize_train=True, quantize_eval=True):
         super(VGG3, self).__init__()
-        self.relu = nn.ReLU()
+        #self.func = function # is for htanh and relu, for binarize and quantized respectively 
         self.name = "VGG3"
         self.q_train = quantize_train
-        self.q_test = quantize_eval
-        self.traincriterion = cel_train
-        self.testcriterion = cel_test
+        self.q_eval = quantize_eval
         self.weight = weightBits
         self.input = inputBits
+        self.relu = nn.ReLU()
 
         #CNN
         # block 1
-        self.conv1 = QuantizedConv2d(1, 64, kernel_size=3, padding=1, stride=1, quantization=self.weight, quantize_train=q_train, quantize_eval=q_eval)
+        self.conv1 = QuantizedConv2d(1, 64, kernel_size=3, padding=1, stride=1, quantization=self.weight, quantize_train=self.q_train, quantize_eval=self.q_eval)
         self.bn1 = nn.BatchNorm2d(64)
-        self.qact1 = QuantizedActivation(quantization=self.input, quantize_train=q_train, quantize_eval=q_eval)
+        self.relu = nn.ReLU()
+        self.qact1 = QuantizedActivation(quantization=self.input, quantize_train=self.q_train, quantize_eval=self.q_eval)
+
 
         # block 2
-        self.conv2 = QuantizedConv2d(64, 64, kernel_size=3, padding=1, stride=1, quantization=self.weight, quantize_train=q_train, quantize_eval=q_eval)
+        self.conv2 = QuantizedConv2d(64, 64, kernel_size=3, padding=1, stride=1, quantization=self.weight, quantize_train=self.q_train, quantize_eval=self.q_eval)
         self.bn2 = nn.BatchNorm2d(64)
-        self.qact2 = QuantizedActivation(quantization=self.input, quantize_train=q_train, quantize_eval=q_eval)
+        self.relu = nn.ReLU()
+        self.qact2 = QuantizedActivation(quantization=self.input, quantize_train=self.q_train, quantize_eval=self.q_eval)
 
         # block 3
-        self.fc1 = QuantizedLinear(7*7*64, 2048, quantization=self.weight, quantize_train=q_train, quantize_eval=q_eval)
+        self.fc1 = QuantizedLinear(7*7*64, 2048, quantization=self.weight, quantize_train=self.q_train, quantize_eval=self.q_eval)
         self.bn3 = nn.BatchNorm1d(2048)
-        self.qact3 = QuantizedActivation(quantization=self.input, quantize_train=q_train, quantize_eval=q_eval)
+        self.relu = nn.ReLU()
+        self.qact3 = QuantizedActivation(quantization=self.input, quantize_train=self.q_train, quantize_eval=self.q_eval)
 
-        self.fc2 = QuantizedLinear(2048, 10, quantization=self.weight, quantize_train=q_train, quantize_eval=q_eval)
+        self.fc2 = QuantizedLinear(2048, 10, quantization=self.weight, quantize_train=self.q_train, quantize_eval=self.q_eval)
         self.scale = Scale()
 
     def forward(self, x):
@@ -95,54 +95,53 @@ class VGG3(nn.Module):
         return x
 
 class VGG7(nn.Module):
-    def __init__(self, cel_train, cel_test, weightBits=None, inputBits=None, quantize_train=True, quantize_eval=True):
+    def __init__(self, weightBits=None, inputBits=None, quantize_train=True, quantize_eval=True):
         super(VGG7, self).__init__()
-        self.relu = nn.ReLU()
+        #self.func = function # is for htanh and relu, for binarize and quantized respectively 
         self.name = "VGG7"
         self.weight = weightBits
         self.input = inputBits
         self.q_train = quantize_train
-        self.q_test = quantize_eval
-        self.traincriterion = cel_train
-        self.testcriterion = cel_test
+        self.q_eval = quantize_eval
+        self.relu = nn.ReLU()
 
         #CNN
         # block 1
-        self.conv1 = QuantizedConv2d(3, 128, kernel_size=3, padding=1, stride=1, quantization=self.weight, layerNr=1, quantize_train=q_train, quantize_eval=q_eval)
+        self.conv1 = QuantizedConv2d(3, 128, kernel_size=3, padding=1, stride=1, quantization=self.weight, layerNr=1, quantize_train=self.q_train, quantize_eval=self.q_eval)
         self.bn1 = nn.BatchNorm2d(128)
-        self.qact1 = QuantizedActivation(quantization=self.input, quantize_train=q_train, quantize_eval=q_eval)
+        self.qact1 = QuantizedActivation(quantization=self.input, quantize_train=self.q_train, quantize_eval=self.q_eval)
 
         # block 2
-        self.conv2 = QuantizedConv2d(128, 128, kernel_size=3, padding=1, stride=1, quantization=self.weight, layerNr=2, quantize_train=q_train, quantize_eval=q_eval)
+        self.conv2 = QuantizedConv2d(128, 128, kernel_size=3, padding=1, stride=1, quantization=self.weight, layerNr=2, quantize_train=self.q_train, quantize_eval=self.q_eval)
         self.bn2 = nn.BatchNorm2d(128)
-        self.qact2 = QuantizedActivation(quantization=self.input, quantize_train=q_train, quantize_eval=q_eval)
+        self.qact2 = QuantizedActivation(quantization=self.input, quantize_train=self.q_train, quantize_eval=self.q_eval)
 
         # block 3
-        self.conv3 = QuantizedConv2d(128, 256, kernel_size=3, padding=1, stride=1, quantization=self.weight, layerNr=3, quantize_train=q_train, quantize_eval=q_eval)
+        self.conv3 = QuantizedConv2d(128, 256, kernel_size=3, padding=1, stride=1, quantization=self.weight, layerNr=3, quantize_train=self.q_train, quantize_eval=self.q_eval)
         self.bn3 = nn.BatchNorm2d(256)
-        self.qact3 = QuantizedActivation(quantization=self.input, quantize_train=q_train, quantize_eval=q_eval)
+        self.qact3 = QuantizedActivation(quantization=self.input, quantize_train=self.q_train, quantize_eval=self.q_eval)
 
         # block 4
-        self.conv4 = QuantizedConv2d(256, 256, kernel_size=3, padding=1, stride=1, quantization=self.weight, layerNr=4, quantize_train=q_train, quantize_eval=q_eval)
+        self.conv4 = QuantizedConv2d(256, 256, kernel_size=3, padding=1, stride=1, quantization=self.weight, layerNr=4, quantize_train=self.q_train, quantize_eval=self.q_eval)
         self.bn4 = nn.BatchNorm2d(256)
-        self.qact4 = QuantizedActivation(quantization=self.input, quantize_train=q_train, quantize_eval=q_eval)
+        self.qact4 = QuantizedActivation(quantization=self.input, quantize_train=self.q_train, quantize_eval=self.q_eval)
 
         # block 5
-        self.conv5 = QuantizedConv2d(256, 512, kernel_size=3, padding=1, stride=1, quantization=self.weight, layerNr=5, quantize_train=q_train, quantize_eval=q_eval)
+        self.conv5 = QuantizedConv2d(256, 512, kernel_size=3, padding=1, stride=1, quantization=self.weight, layerNr=5, quantize_train=self.q_train, quantize_eval=self.q_eval)
         self.bn5 = nn.BatchNorm2d(512)
-        self.qact5 = QuantizedActivation(quantization=self.input, quantize_train=q_train, quantize_eval=q_eval)
+        self.qact5 = QuantizedActivation(quantization=self.input, quantize_train=self.q_train, quantize_eval=self.q_eval)
 
         # block 6
-        self.conv6 = QuantizedConv2d(512, 512, kernel_size=3, padding=1, stride=1, quantization=self.weight, layerNr=6, quantize_train=q_train, quantize_eval=q_eval)
+        self.conv6 = QuantizedConv2d(512, 512, kernel_size=3, padding=1, stride=1, quantization=self.weight, layerNr=6, quantize_train=self.q_train, quantize_eval=self.q_eval)
         self.bn6 = nn.BatchNorm2d(512)
-        self.qact6 = QuantizedActivation(quantization=self.input, quantize_train=q_train, quantize_eval=q_eval)
+        self.qact6 = QuantizedActivation(quantization=self.input, quantize_train=self.q_train, quantize_eval=self.q_eval)
 
         # block 7
-        self.fc1 = QuantizedLinear(8192, 1024, quantization=self.weight, layerNr=7, quantize_train=q_train, quantize_eval=q_eval)
+        self.fc1 = QuantizedLinear(8192, 1024, quantization=self.weight, layerNr=7, quantize_train=self.q_train, quantize_eval=self.q_eval)
         self.bn7 = nn.BatchNorm1d(1024)
-        self.qact7 = QuantizedActivation(quantization=self.input, quantize_train=q_train, quantize_eval=q_eval)
+        self.qact7 = QuantizedActivation(quantization=self.input, quantize_train=self.q_train, quantize_eval=self.q_eval)
 
-        self.fc2 = QuantizedLinear(1024, 10, quantization=self.weight, layerNr=8, quantize_train=q_train, quantize_eval=q_eval)
+        self.fc2 = QuantizedLinear(1024, 10, quantization=self.weight, layerNr=8, quantize_train=self.q_train, quantize_eval=self.q_eval)
         self.scale = Scale(init_value=1e-3)
 
     def forward(self, x):
@@ -202,17 +201,17 @@ class VGG7(nn.Module):
 class BasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(self, in_planes, planes, stride=1, weightBits=None, inputBits=None, an_sim=None, array_size=None, mapping=None, mapping_distr=None, sorted_mapping_idx=None, performance_mode=None, quantize_train=True, quantize_eval=True, error_model=None, train_model=None, extract_absfreq=None):
+    def __init__(self, in_planes, planes, stride=1, quantMethod=None, an_sim=None, array_size=None, mapping=None, mapping_distr=None, sorted_mapping_idx=None, performance_mode=None, quantize_train=True, quantize_eval=True, error_model=None, train_model=None, extract_absfreq=None):
         super(BasicBlock, self).__init__()
         self.htanh = nn.Hardtanh()
-        self.qact = QuantizedActivation(quantization=inputBits)
+        self.qact = QuantizedActivation(quantization=quantMethod)
         self.conv1 = QuantizedConv2d(
-            in_planes, planes, kernel_size=3, stride=stride, padding=1, quantization=weightBits, an_sim=an_sim, array_size=array_size, mac_mapping=mapping, mac_mapping_distr=mapping_distr, sorted_mac_mapping_idx=sorted_mapping_idx,
+            in_planes, planes, kernel_size=3, stride=stride, padding=1, quantization=quantMethod, an_sim=an_sim, array_size=array_size, mac_mapping=mapping, mac_mapping_distr=mapping_distr, sorted_mac_mapping_idx=sorted_mapping_idx,
             performance_mode=performance_mode,
             error_model=error_model, bias=False, train_model=train_model, extract_absfreq=extract_absfreq)
         self.bn1 = nn.BatchNorm2d(planes)
         self.conv2 = QuantizedConv2d(planes, planes, kernel_size=3,
-                               stride=1, padding=1, quantization=weightBits, an_sim=an_sim, array_size=array_size, mac_mapping=mapping, mac_mapping_distr=mapping_distr, sorted_mac_mapping_idx=sorted_mapping_idx,
+                               stride=1, padding=1, quantization=quantMethod, an_sim=an_sim, array_size=array_size, mac_mapping=mapping, mac_mapping_distr=mapping_distr, sorted_mac_mapping_idx=sorted_mapping_idx,
                                performance_mode=performance_mode,
                                error_model=error_model, bias=False, train_model=train_model, extract_absfreq=extract_absfreq)
         self.bn2 = nn.BatchNorm2d(planes)
@@ -221,7 +220,7 @@ class BasicBlock(nn.Module):
         if stride != 1 or in_planes != self.expansion*planes:
             self.shortcut = nn.Sequential(
                 QuantizedConv2d(in_planes, self.expansion*planes,
-                          kernel_size=1, stride=stride, quantization=weightBits, an_sim=an_sim, array_size=array_size, mac_mapping=mapping, mac_mapping_distr=mapping_distr, sorted_mac_mapping_idx=sorted_mapping_idx,
+                          kernel_size=1, stride=stride, quantization=quantMethod, an_sim=an_sim, array_size=array_size, mac_mapping=mapping, mac_mapping_distr=mapping_distr, sorted_mac_mapping_idx=sorted_mapping_idx,
                           performance_mode=performance_mode,
                           error_model=error_model, bias=False, train_model=train_model, extract_absfreq=extract_absfreq),
                 nn.BatchNorm2d(self.expansion*planes)
@@ -229,38 +228,48 @@ class BasicBlock(nn.Module):
 
     def forward(self, x):
         out = self.qact(self.htanh(self.bn1(self.conv1(x))))
+        # out = self.qact(self.htanh(self.bn2(self.conv2(out))))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
         out = self.qact(self.htanh(out))
         return out
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, cel_train, cel_test, quantize_train=True, quantize_eval=True, train_model=None, num_classes=10):
+    def __init__(self, block, num_blocks, train_crit, test_crit, quantMethod=None, an_sim=None, array_size=None, mapping=None, mapping_distr=None, sorted_mapping_idx=None, performance_mode=None, quantize_train=True, quantize_eval=True, error_model=None, train_model=None, extract_absfreq=None, num_classes=10):
         super(ResNet, self).__init__()
-        self.name = "ResNet"
-        self.traincriterion = cel_train
-        self.testcriterion = cel_test
+        self.name = "ResNet18"
+        self.traincriterion = train_crit
+        self.testcriterion = test_crit
+        self.quantization = quantMethod
         self.q_train = quantize_train
-        self.q_test = quantize_eval
+        self.q_eval = quantize_eval
+        self.error_model = error_model
+        self.an_sim = an_sim
+        self.array_size = array_size
+        self.mapping = mapping
+        self.mapping_distr = mapping_distr
+        self.sorted_mapping_idx = sorted_mapping_idx
+        self.performance_mode = performance_mode
         self.train_model = train_model
+        self.extract_absfreq = extract_absfreq
         self.in_planes = 64
 
         self.htanh = nn.Hardtanh()
-        self.qact = QuantizedActivation(quantization=self.input)
+        self.qact = QuantizedActivation(quantization=self.quantization)
 
-        self.conv1 = QuantizedConv2d(3, 64, kernel_size=3, stride=1, padding=1, quantization=self.weight)
+        self.conv1 = QuantizedConv2d(3, 64, kernel_size=3, stride=1, padding=1, quantization=self.quantization, error_model=self.error_model, bias=False, array_size=self.array_size)
         self.bn1 = nn.BatchNorm2d(64)
         self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
-        self.linear = QuantizedLinear(512*block.expansion, num_classes, quantization=self.weight, train_model=self.train_model)
+        self.linear = QuantizedLinear(512*block.expansion, num_classes, quantization=self.quantization, an_sim=self.an_sim, array_size=self.array_size, mac_mapping=self.mapping, mac_mapping_distr=self.mapping_distr, sorted_mac_mapping_idx=self.sorted_mapping_idx, performance_mode=self.performance_mode, error_model=self.error_model, bias=False, train_model=self.train_model, extract_absfreq=self.extract_absfreq)
 
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks-1)
         layers = []
         for stride in strides:
-            layers.append(block(self.in_planes, planes, stride, quantMethod=self.quantization, train_model=self.train_model))
+            layers.append(block(self.in_planes, planes, stride, quantMethod=self.quantization, an_sim=self.an_sim, array_size=self.array_size, mapping=self.mapping, mapping_distr=self.mapping_distr, sorted_mapping_idx=self.sorted_mapping_idx, performance_mode=self.performance_mode, error_model=self.error_model, train_model=self.train_model, extract_absfreq=self.extract_absfreq))
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
@@ -277,5 +286,5 @@ class ResNet(nn.Module):
         out = F.max_pool2d(out, 4)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
+        # print("---")
         return out
-    

@@ -6,7 +6,23 @@ from datetime import datetime
 import json
 
 from QuantizedNN import QuantizedLinear, QuantizedConv2d, QuantizedActivation
-from Test_Models import VGG3_Test_Q, VGG3_Test_B #, VGG3_BNN, VGG3_QI2, VGG3_QI4, VGG3_QI8, VGG7_BNN, VGG7_QI2, VGG7_QI4, VGG7_QI8, ResNet_BNN, ResNet_QI2, ResNet_QI4, ResNet_QI8
+from Test_Models import VGG3_Test_Q1, VGG3_Test_Q2, VGG3_Test_B1, VGG3_Test_B2 #, VGG3_BNN, VGG3_QI2, VGG3_QI4, VGG3_QI8, VGG7_BNN, VGG7_QI2, VGG7_QI4, VGG7_QI8, ResNet_BNN, ResNet_QI2, ResNet_QI4, ResNet_QI8
+
+def get_model(args):
+    nn_model = None
+
+    if args.model == "VGG3_Test_B1":
+        nn_model = VGG3_Test_B1
+    if args.model == "VGG3_Test_B2":
+        nn_model = VGG3_Test_B2
+    if args.model == "VGG3_Test_Q1":
+        nn_model = VGG3_Test_Q1
+    if args.model == "VGG3_Test_Q2":
+        nn_model = VGG3_Test_Q2
+    else:
+        nn_model = VGG3_Test_B1
+    return nn_model
+
 
 def set_layer_mode(model, mode):
     for layer in model.children():
@@ -17,6 +33,8 @@ def set_layer_mode(model, mode):
                 layer.eval = False
 
 def parse_args(parser):
+    parser.add_argument('--model', type=str, default=None,
+                    help='VGG3/VGG7')
     parser.add_argument('--dataset', type=str, default=None,
                     help='MNIST/FMNIST/QMNIST/SVHN/CIFAR10')
     parser.add_argument('--train-model', type=int, default=None, help='Whether to train a model')
@@ -50,7 +68,7 @@ def parse_args(parser):
     parser.add_argument('--input', type=int, default=4, help='Quanization of input-bits (default: 4)')
 
 
-def dump_exp_data(model, args, all_accuracies):
+def dump_exp_data(model, args, result):
     to_dump = dict()
     to_dump["model"] = model.name
     # to_dump["method"] = model.method
@@ -61,9 +79,9 @@ def dump_exp_data(model, args, all_accuracies):
     to_dump["stepsize"] = args.step_size
     # to_dump["traincrit"] = model.traincriterion.name
     # to_dump["testcrit"] = model.testcriterion.name
-    to_dump["test_error"] = all_accuracies
     to_dump["weight"] = args.weight
     to_dump["input"] = args.input
+    to_dump["result"] = result
     return to_dump
 
 def create_exp_folder(model):

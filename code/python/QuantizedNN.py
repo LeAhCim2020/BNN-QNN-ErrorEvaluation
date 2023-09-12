@@ -20,21 +20,6 @@ class Quantize(Function):
 
 quantize = Quantize.apply
 
-
-class ErrorModel(Function):
-    @staticmethod
-    def forward(ctx, input, error_model=None):
-        output = input.clone().detach()
-        output = error_model.applyErrorModel(output)
-        return output
-
-    @staticmethod
-    def backward(ctx, grad_output):
-        grad_input = grad_output.clone()
-        return grad_input, None
-
-apply_error_model = ErrorModel.apply
-
 def check_quantization(quantize_train, quantize_eval, training):
     condition = ((quantize_train == True) and (training == True)) or ((quantize_eval == True) and (training == False)) or ((quantize_train == True) and (quantize_eval == True))
 
@@ -49,7 +34,6 @@ class QuantizedActivation(nn.Module):
         self.name = "QuantizedActivation"
         self.layerNR = kwargs.pop('layerNr', None)
         self.quantization = kwargs.pop('quantization', None)
-        self.error_model = kwargs.pop('error_model', None)
         self.quantize_train = kwargs.pop('quantize_train', True)
         self.quantize_eval = kwargs.pop('quantize_eval', True)
         self.training = None
@@ -63,8 +47,6 @@ class QuantizedActivation(nn.Module):
             output = quantize(input, self.quantization)
         else:
             output = input
-        if self.error_model is not None:
-            output = apply_error_model(output, self.error_model)
         return output
 
 
@@ -73,7 +55,6 @@ class QuantizedLinear(nn.Linear):
         self.name = "QuantizedLinear"
         self.layerNR = kwargs.pop('layerNr', None)
         self.quantization = kwargs.pop('quantization', None)
-        self.error_model = kwargs.pop('error_model', None)
         self.quantize_train = kwargs.pop('quantize_train', True)
         self.quantize_eval = kwargs.pop('quantize_eval', True)
         self.training = None
@@ -89,8 +70,6 @@ class QuantizedLinear(nn.Linear):
             else:
                 quantized_weight = self.weight
             # quantized_weight = quantize(self.weight, self.quantization)
-            if self.error_model is not None:
-                quantized_weight = apply_error_model(quantized_weight, self.error_model)
             output = F.linear(input, quantized_weight)
             return output
         else:
@@ -104,10 +83,8 @@ class QuantizedLinear(nn.Linear):
             else:
                 quantized_weight = self.weight
                 quantized_bias = self.bias
-            if self.error_model is not None:
-                quantized_weight = apply_error_model(quantized_weight, self.error_model)
-                quantized_bias = apply_error_model(quantized_bias, self.error_model)
-            return F.linear(input, quantized_weight, quantized_bias)
+            output = F.linear(input, quantized_weight, quantized_bias)
+            return output
 
 
 class QuantizedConv2d(nn.Conv2d):
@@ -115,7 +92,6 @@ class QuantizedConv2d(nn.Conv2d):
         self.name = "QuantizedConv2d"
         self.layerNR = kwargs.pop('layerNr', None)
         self.quantization = kwargs.pop('quantization', None)
-        self.error_model = kwargs.pop('error_model', None)
         self.quantize_train = kwargs.pop('quantize_train', True)
         self.quantize_eval = kwargs.pop('quantize_eval', True)
         self.training = None
@@ -131,8 +107,6 @@ class QuantizedConv2d(nn.Conv2d):
             else:
                 quantized_weight = self.weight
                 quantized_bias = self.bias
-            if self.error_model is not None:
-                quantized_weight = apply_error_model(quantized_weight, self.error_model)
             output = F.conv2d(input, quantized_weight, self.bias, self.stride,
                               self.padding, self.dilation, self.groups)
             return output
@@ -148,10 +122,6 @@ class QuantizedConv2d(nn.Conv2d):
             else:
                 quantized_weight = self.weight
                 quantized_bias = self.bias
-            # check whether error model needs to be applied
-            if self.error_model is not None:
-                quantized_weight = apply_error_model(quantized_weight, self.error_model)
-                quantized_bias = apply_error_model(quantized_bias, self.error_model)
             # compute regular 2d conv
             output = F.conv2d(input, quantized_weight, quantized_bias, self.stride,
                               self.padding, self.dilation, self.groups)

@@ -59,13 +59,27 @@ def parse_args(parser):
                         help='how many batches to wait before logging training status')
     parser.add_argument('--save-model', action='store_true', default=False,
                         help='For Saving the current Model')
-    parser.add_argument('--test-error', action='store_true', default=False,
-                        help='Test accuracy under errors')
     parser.add_argument('--weight', type=int, default=4, help='Quanization of weight-bits (default: 4)')
     parser.add_argument('--input', type=int, default=4, help='Quanization of input-bits (default: 4)')
 
 
-def dump_exp_data(model, args, all_accuracies):
+# def dump_exp_data(model, args, all_accuracies):
+#     to_dump = dict()
+#     to_dump["model"] = model.name
+#     # to_dump["method"] = model.method
+#     to_dump["batchsize"] = args.batch_size
+#     to_dump["epochs"] = args.epochs
+#     to_dump["learning_rate"] = args.lr
+#     to_dump["gamma"] = args.gamma
+#     to_dump["stepsize"] = args.step_size
+#     # to_dump["traincrit"] = model.traincriterion.name
+#     # to_dump["testcrit"] = model.testcriterion.name
+#     to_dump["test_error"] = all_accuracies
+#     to_dump["weight"] = args.weight
+#     to_dump["input"] = args.input
+#     return to_dump
+
+def dump_exp_data(model, args, result):
     to_dump = dict()
     to_dump["model"] = model.name
     # to_dump["method"] = model.method
@@ -76,10 +90,11 @@ def dump_exp_data(model, args, all_accuracies):
     to_dump["stepsize"] = args.step_size
     # to_dump["traincrit"] = model.traincriterion.name
     # to_dump["testcrit"] = model.testcriterion.name
-    to_dump["test_error"] = all_accuracies
     to_dump["weight"] = args.weight
     to_dump["input"] = args.input
+    to_dump["result"] = result
     return to_dump
+
 
 def create_exp_folder(model):
     exp_path = ""
@@ -98,5 +113,3 @@ def store_exp_data(to_dump_path, to_dump_data):
     with open(to_dump_path, 'a') as outfile:
         json.dump(to_dump_data, outfile)
         print ("Successfully stored results in %s" % to_dump_path)
-
-# TODO: ONNX save

@@ -62,8 +62,8 @@ class Quantization2:
         return self.method(input,
          input.min().item(), input.max().item(), self.bits, self.unsigned)
 
-q8bit = Quantization2(quantization.quantize, 8, 0)
-q4bit = Quantization2(quantization.quantize, 4, 0)
+q8bit = Quantization2(quantization.quantize, 8, 1)
+q4bit = Quantization2(quantization.quantize, 4, 1)
 
 cel_train = Criterion(method=nn.CrossEntropyLoss(reduction="none"), name="CEL_train")
 cel_test = Criterion(method=nn.CrossEntropyLoss(reduction="none"), name="CEL_test")
@@ -104,9 +104,9 @@ def main():
     nn_model = get_model(args)
 
     if args.model == ("ResNet"):
-       model = nn_model(BasicBlock, [2, 2, 2, 2], cel_train, cel_test, weightBits=q4bit, inputBits=q8bit, quantize_train=q_train, quantize_eval=q_eval).to(device)
+       model = nn_model(BasicBlock, [2, 2, 2, 2], weightBits=q4bit, inputBits=q8bit, quantize_train=q_train, quantize_eval=q_eval).to(device)
     else:
-        model = nn_model(cel_train, cel_test, weightBits=q4bit, inputBits=q8bit, quantize_train=q_train, quantize_eval=q_eval).to(device)
+        model = nn_model(weightBits=q4bit, inputBits=q8bit, quantize_train=q_train, quantize_eval=q_eval).to(device)
 
     # create experiment folder and file
     to_dump_path = create_exp_folder(model)

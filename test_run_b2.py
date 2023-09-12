@@ -17,7 +17,7 @@ from Test_Utils import set_layer_mode, parse_args, dump_exp_data, create_exp_fol
 
 from QuantizedNN import QuantizedLinear, QuantizedConv2d, QuantizedActivation
 
-from Test_Models import VGG3_Test_B
+from Test_Models import VGG3_Test_B2
 
 from Traintest_Utils import train, test, test_error, Criterion, binary_hingeloss, Clippy
 
@@ -25,25 +25,6 @@ import binarizePM1
 import binarizePM1FI
 import quantization
 import quantizationFI
-
-class SymmetricBitErrorsQNN:
-    def __init__(self, method_errors, method_enc_dec, p, bits, type):
-        self.method_errors = method_errors
-        self.method_enc_dec = method_enc_dec
-        self.p = p
-        self.bits = bits
-        self.type = type
-    def updateErrorModel(self, p_updated):
-        self.p = p_updated
-    def resetErrorModel(self):
-        self.p = 0
-    def applyErrorModel(self, input):
-        output = self.method_enc_dec(input,
-         input.min().item(), input.max().item(), self.bits, 1) # to unsigned, encode
-        output = self.method_errors(input, self.p, self.p, self.bits) # inject bit flips
-        output = self.method_enc_dec(input,
-         input.min().item(), input.max().item(), self.bits, 0) # to signed again, decode
-        return output
     
 class Quantization1:
     def __init__(self, method):
@@ -100,11 +81,7 @@ def main():
     train_loader = torch.utils.data.DataLoader(dataset1,**train_kwargs)
     test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
 
-    nn_model = VGG3_Test_B
-
-    tensor = torch.rand(size=(2,2,3,3), dtype=torch.float).cuda()
-
-    model = nn_model(cel_train, cel_test, weightBits=binarizepm1, inputBits=binarizepm1, quantize_train=q_train, quantize_eval=q_eval).to(device)
+    model = VGG3_Test_B2(weightBits=binarizepm1, inputBits=binarizepm1, quantize_train=q_train, quantize_eval=q_eval).to(device)
 
     # create experiment folder and file
     to_dump_path = create_exp_folder(model)
@@ -129,12 +106,17 @@ def main():
         # test(model, device, train_loader)
         since = int(round(time.time()*1000))
         #
-        test(model, device, test_loader)
+        result = test(model, device, test_loader)
         #
         time_elapsed += int(round(time.time()*1000)) - since
         print('Test time elapsed: {}ms'.format(int(round(time.time()*1000)) - since))
         # test(model, device, train_loader)
         scheduler.step()
+        if epoch == args.epochs:
+            final_result = result
+
+    to_dump_data = dump_exp_data(model, args, final_result)
+    store_exp_data(to_dump_path, to_dump_data) 
 
     if args.save_model:
         torch.save(model.state_dict(), "mnist_cnn.pt")
